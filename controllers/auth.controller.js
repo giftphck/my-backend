@@ -28,6 +28,21 @@ exports.login = async (req, res) => {
     { expiresIn: '7d' }
   )
 
+
+  res
+    .cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false, // true ถ้า production https
+      sameSite: 'lax' // production ใช้ 'none'
+    })
+    .cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax'
+    })
+    .json({ message: 'Login successful' });
+
+
   await supabase.from('refresh_tokens').insert([
     { user_id: user.id, token: refreshToken }
   ])
@@ -36,7 +51,9 @@ exports.login = async (req, res) => {
 }
 
 exports.refresh = async (req, res) => {
-  const { refreshToken } = req.body
+  // const { refreshToken } = req.body
+  const refreshToken = req.cookies.refreshToken;
+
   if (!refreshToken) return res.status(401).json({ message: 'No refresh token' })
 
   try {
